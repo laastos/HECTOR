@@ -1,0 +1,10 @@
+metadata_version: 1
+name: A complementarity-based approach to de novo binder design
+description: HECTOR is an ultra-fast algorithm that evaluates surface complementarity
+  through a vectorized, lower-dimensional surface representation. It enables high-throughput
+  docking of protein structure databases against target epitopes to identify complementary
+  scaffolds for binder design.
+authors:
+- name: Mohammad ElGamacy
+  affiliations:
+  - name: University Hospital Tübingen
