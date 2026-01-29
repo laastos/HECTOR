@@ -25,3 +25,7 @@ RUN pip install --no-cache-dir \
         matplotlib==3.6.2 \
         numpy==1.26.0 \
         scipy==1.12.0
+
+WORKDIR /workspace
+
+CMD ["/bin/bash"]
