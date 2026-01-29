@@ -84,7 +84,7 @@ Generate a molecular surface mesh from the PDB structure using EDTSurf.
 ### Command
 
 ```bash
-EDTSurf -i /data/query.pdb -o /data/query.ply -s 3
+EDTSurf -i data/query.pdb -o data/query.ply -s 3
 ```
 
 ### Parameters
@@ -133,7 +133,7 @@ Generate surface fingerprints (maps) from the PLY surface mesh.
 cd /path/to/HECTOR/code
 
 python hector_mapper.py \
-    /data/query.ply \    # Input PLY file
+    data/query.ply \    # Input PLY file
     10                \   # Support distance X (radius, Angstroms)
     20                \   # Support distance Y (height, Angstroms)
     0.2               \   # Bin size (resolution, Angstroms)
@@ -175,7 +175,7 @@ python hector_mapper.py \
 ```python
 import numpy as np
 
-data = np.load('/results/query_rcpt.npz', allow_pickle=True)
+data = np.load('results/query_rcpt.npz', allow_pickle=True)
 print(f"Number of maps: {data['maps'].shape[0]}")
 print(f"Map dimensions: {data['maps'].shape[1:]}")
 print(f"Coordinates shape: {data['coords'].shape}")
@@ -188,7 +188,7 @@ For faster processing on multi-core systems, use the parallelized version:
 
 ```bash
 python hector_mapper_parallel.py \
-    /data/query.ply \
+    data/query.ply \
     10 20 0.2 5 1 0.5 40 0.3 rcpt \
     --n_jobs -1  # Use all available CPU cores
 ```
@@ -198,7 +198,7 @@ python hector_mapper_parallel.py \
 1. **Adjust skipping frequencies** for faster processing:
    ```bash
    # Use recommended defaults (40x faster than dot_skp=5, map_skp=1)
-   python hector_mapper_parallel.py /data/query.ply 10 20 0.2 40 8 0.5 40 0.3 rcpt
+   python hector_mapper_parallel.py data/query.ply 10 20 0.2 40 8 0.5 40 0.3 rcpt
    ```
 
 2. **Control parallelism** with `--n_jobs`:
@@ -213,7 +213,7 @@ python hector_mapper_parallel.py \
 4. **Combine optimizations** for maximum performance:
    ```bash
    # High-throughput screening: 64× fewer vertices + 8× parallel = 512× faster
-   python hector_mapper_parallel.py /data/query.ply 10 20 0.2 40 8 0.5 40 0.3 rcpt
+   python hector_mapper_parallel.py data/query.ply 10 20 0.2 40 8 0.5 40 0.3 rcpt
    ```
 
 **Memory Considerations:**
@@ -248,7 +248,7 @@ atm_prs = [(atm0, atm1), (atm1, atm2), (atm2, atm0)]
 
 ```bash
 python maps_analysis_pairs_vs_all.py \
-    /data/scaffolds_db/    \  # Directory with scaffold NPZ files
+    data/scaffolds_db/    \  # Directory with scaffold NPZ files
     query_rcpt.npz         \  # Query fingerprints
     -0.82                     # R-factor cutoff
 ```
@@ -296,7 +296,7 @@ dist_tol = 0.01        # Distance tolerance (Angstroms)
 ```python
 import numpy as np
 
-results = np.load('/results/srch_rslts.npy', allow_pickle=True)
+results = np.load('results/srch_rslts.npy', allow_pickle=True)
 print(f"Number of hits: {len(results)}")
 print(f"R-factor range: {results[:, 3].min():.3f} to {results[:, 3].max():.3f}")
 
@@ -316,8 +316,8 @@ Dock identified scaffolds against the target and filter by quality metrics.
 
 ```bash
 python aln_fltr_4_dots.py \
-    /results/srch_rslts.npy    \  # Search results from Step 3
-    /data/scaffolds_db            # Directory with scaffold PDB files
+    results/srch_rslts.npy    \  # Search results from Step 3
+    data/scaffolds_db            # Directory with scaffold PDB files
 ```
 
 ### Filtering Parameters
@@ -344,7 +344,7 @@ PDB files of scaffolds aligned to the target position.
 ```python
 import numpy as np
 
-dock = np.load('/results/dock_rslts.npy', allow_pickle=True)
+dock = np.load('results/dock_rslts.npy', allow_pickle=True)
 print(f"Validated hits: {len(dock)}")
 
 for hit in dock:
@@ -365,7 +365,7 @@ Use PyMOL, Chimera, or other molecular visualization software:
 
 ```bash
 # PyMOL example
-pymol /data/query.pdb /results/5nlc_A_080_alnd.pdb
+pymol data/query.pdb results/5nlc_A_080_alnd.pdb
 ```
 
 ### Ranking Candidates
@@ -401,29 +401,29 @@ def score_hit(hit):
 # invoke_hector.sh - Complete HECTOR pipeline
 
 # Step 1: Generate surface (if not already done)
-# EDTSurf -i /data/il7ra.pdb -o /data/il7ra.ply -s 3
+# EDTSurf -i data/il7ra.pdb -o data/il7ra.ply -s 3
 
 # Step 2: Generate fingerprints
 # Option A: Standard (single-threaded)
 python hector_mapper.py \
-    /data/il7ra.ply \
+    data/il7ra.ply \
     10 20 0.2 5 1 0.5 40 0.3 rcpt
 
 # Option B: Parallel (recommended for faster processing)
 python hector_mapper_parallel.py \
-    /data/il7ra.ply \
+    data/il7ra.ply \
     10 20 0.2 40 8 0.5 40 0.3 rcpt
 
 # Step 3: Search database
 python maps_analysis_pairs_vs_all.py \
-    /data/scaffolds_db/ \
+    data/scaffolds_db/ \
     il7ra_rcpt.npz \
     -0.82
 
 # Step 4: Dock and filter
 python aln_fltr_4_dots.py \
-    /results/srch_rslts.npy \
-    /data/scaffolds_db
+    results/srch_rslts.npy \
+    data/scaffolds_db
 ```
 
 ### Expected Output

@@ -28,14 +28,18 @@ Docker provides the easiest and most reproducible setup.
 #### 1. Build the Docker Image
 
 ```bash
-cd /path/to/HECTOR/environment
-docker build -t hector:latest .
+cd /path/to/HECTOR
+docker build -f docker/Dockerfile -t hector:latest .
 ```
 
 #### 2. Run HECTOR in Docker
 
 ```bash
-docker run -it -v /path/to/HECTOR:/workspace hector:latest
+# Mount the HECTOR directory to /workspace in the container
+docker run -it -v $(pwd):/workspace hector:latest
+
+# Inside the container, you'll be in /workspace (the project root)
+# All paths are relative to this directory
 ```
 
 #### Docker Image Contents
@@ -217,36 +221,67 @@ usage: hector_mapper.py [-h] ply dist_x dist_y bin dot_skp map_skp infltn radius
 Ensure the following directory structure:
 
 ```bash
-# Create necessary directories
-mkdir -p /path/to/HECTOR/data
-mkdir -p /path/to/HECTOR/results
-mkdir -p /path/to/HECTOR/data/scaffolds_db
+# Create necessary directories (if not already present)
+mkdir -p data/scaffolds_db
+mkdir -p results
+mkdir -p input
+mkdir -p output
 ```
 
 ---
 
 ## Scaffold Database Setup
 
-### Option 1: Use Provided Database
+**Important:** Scaffold database files (*.pdb, *.npz) are not included in the git repository due to their size. You need to download and generate them.
 
-The repository includes a sample scaffold database with pre-computed fingerprints:
-- `1CGI_A_rcpt.npz`, `1CGI_B_rcpt.npz`
-- `5djl_A_rcpt.npz`, `5nlc_A_rcpt.npz`
-- `7z64_B_rcpt.npz`, `8brb_B_rcpt.npz`
+### Option 1: Automated Setup (Recommended)
 
-### Option 2: Build Custom Database
+Use the provided setup scripts to automatically download and process example scaffolds:
 
-To create fingerprints for new scaffolds:
+#### Using Bash (Linux/Mac/Docker):
+```bash
+./scripts/setup_scaffold_database.sh
+```
+
+#### Using Python (Cross-platform):
+```bash
+python scripts/setup_scaffold_database.py
+```
+
+**What the scripts do:**
+1. Download 8 example PDB structures from RCSB PDB
+2. Extract specific chains (1CGI_A, 1CGI_B, 1ky2_A, 1uzi_A, 5djl_A, 5nlc_A, 7z64_B, 8brb_B)
+3. Generate surface meshes using EDTSurf
+4. Generate fingerprints using hector_mapper_parallel.py
+
+**Processing time:** ~30-40 minutes for all scaffolds
+
+**Expected output:**
+```
+data/scaffolds_db/
+├── 1CGI_A.pdb          # PDB structure
+├── 1CGI_A_rcpt.npz     # Pre-computed fingerprints
+├── 1CGI_B.pdb
+├── 1CGI_B_rcpt.npz
+└── ... (16 files total)
+```
+
+### Option 2: Manual Setup for Custom Scaffolds
+
+To add your own scaffolds to the database:
 
 ```bash
-# 1. Download PDB structures
-wget https://files.rcsb.org/download/XXXX.pdb
+# 1. Download PDB structure
+wget https://files.rcsb.org/download/XXXX.pdb -O data/scaffolds_db/XXXX_A.pdb
 
 # 2. Generate surface mesh
-EDTSurf -i XXXX.pdb -o XXXX.ply -s 3
+EDTSurf -i data/scaffolds_db/XXXX_A.pdb -o output/XXXX_A.ply -s 3
 
-# 3. Generate fingerprints
-python hector_mapper.py XXXX.ply 10 20 0.2 5 1 0.5 40 0.3 rcpt
+# 3. Generate fingerprints (use parallel version for speed)
+python code/hector_mapper_parallel.py output/XXXX_A.ply 10 20 0.2 40 8 0.5 40 0.3 rcpt
+
+# 4. Move fingerprints to scaffold database
+mv results/XXXX_A_rcpt.npz data/scaffolds_db/
 ```
 
 ---

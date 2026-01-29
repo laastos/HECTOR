@@ -42,8 +42,7 @@ HECTOR enables the identification of complementary protein scaffolds from struct
 
 ```bash
 # Using Docker (recommended)
-cd environment
-docker build -t hector:latest .
+docker build -f docker/Dockerfile -t hector:latest .
 docker run -it -v $(pwd):/workspace hector:latest
 
 # Or using conda
@@ -66,11 +65,25 @@ python code/hector_mapper.py protein.ply 10 20 0.2 5 1 0.5 40 0.3 rcpt
 python code/hector_mapper_parallel.py protein.ply 10 20 0.2 40 8 0.5 40 0.3 rcpt
 
 # Step 3: Search scaffold database
-python code/maps_analysis_pairs_vs_all.py /data/scaffolds_db/ protein_rcpt.npz -0.82
+python code/maps_analysis_pairs_vs_all.py data/scaffolds_db/ results/protein_rcpt.npz -0.82
 
 # Step 4: Dock and filter candidates
-python code/aln_fltr_4_dots.py /results/srch_rslts.npy /data/scaffolds_db
+python code/aln_fltr_4_dots.py results/srch_rslts.npy data/scaffolds_db
 ```
+
+**Note:** Scaffold database files are not included in git due to size. Set up the database using:
+
+```bash
+# Automated setup (downloads and processes 8 example scaffolds)
+./scripts/setup_scaffold_database.sh
+# OR
+python scripts/setup_scaffold_database.py
+
+# Create additional directories
+mkdir -p results output input
+```
+
+See [Installation Guide](docs/INSTALLATION.md#scaffold-database-setup) for details.
 
 ---
 
@@ -86,9 +99,18 @@ HECTOR/
 │   ├── sim.pyx                     # Cython SSIM implementation
 │   ├── invoke_hector.sh            # Example execution script
 │   └── solv_krnls_0.50A_24vxl.npz  # Solvation kernels
-├── data/                           # Input data (not tracked)
-│   └── scaffolds_db/               # Pre-computed scaffold database
-├── results/                        # Output results (not tracked)
+├── data/                           # Data directory
+│   └── scaffolds_db/               # Pre-computed scaffold database (included)
+│       ├── *.pdb                   # 8 example scaffold structures
+│       └── *_rcpt.npz              # Pre-computed fingerprints
+├── input/                          # Input PDB files (create if needed)
+├── output/                         # EDTSurf PLY outputs (create if needed)
+├── results/                        # Pipeline outputs (create if needed)
+├── docker/                         # Docker configuration
+│   └── Dockerfile                  # Container definition
+├── scripts/                        # Setup scripts
+│   ├── setup_scaffold_database.sh  # Bash version
+│   └── setup_scaffold_database.py  # Python version
 ├── docs/                           # Documentation
 │   ├── README.md                   # Documentation index
 │   ├── INSTALLATION.md             # Setup instructions
@@ -96,8 +118,6 @@ HECTOR/
 │   ├── PIPELINE.md                 # Usage guide
 │   ├── API_REFERENCE.md            # Code documentation
 │   └── SCIENTIFIC_BACKGROUND.md    # Research context
-├── environment/                    # Docker configuration
-│   └── Dockerfile
 ├── reference/                      # Research article
 └── metadata/                       # Project metadata
 ```
