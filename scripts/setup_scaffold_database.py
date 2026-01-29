@@ -87,7 +87,10 @@ def download_pdb(pdb_id, chain, output_dir):
         if line.startswith('ATOM') or line.startswith('HETATM'):
             # Chain ID is at column 21 (0-indexed) in standard PDB format
             if len(line) > 21 and line[21] == chain:
-                chain_lines.append(line)
+                # Truncate to column 66 to remove non-standard extra fields
+                # Standard PDB format is columns 1-66 (ATOM to B-factor)
+                clean_line = line[:66].rstrip()
+                chain_lines.append(clean_line)
 
     # Write PDB file with proper structure
     with open(output_path, 'w') as f:

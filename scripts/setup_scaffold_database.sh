@@ -74,9 +74,10 @@ for scaffold in "${SCAFFOLDS[@]}"; do
             "/tmp/${pdb_id}.pdb" > "data/scaffolds_db/${output_name}.pdb" 2>/dev/null || true
 
         # Extract ATOM/HETATM records for specified chain (chain ID at column 22, position 21 in 0-index)
-        awk -v chain="${chain}" '$1 == "ATOM" && substr($0, 22, 1) == chain' "/tmp/${pdb_id}.pdb" \
+        # Truncate to column 66 to remove non-standard extra fields that confuse EDTSurf
+        awk -v chain="${chain}" '$1 == "ATOM" && substr($0, 22, 1) == chain {print substr($0, 1, 66)}' "/tmp/${pdb_id}.pdb" \
             >> "data/scaffolds_db/${output_name}.pdb" || true
-        awk -v chain="${chain}" '$1 == "HETATM" && substr($0, 22, 1) == chain' "/tmp/${pdb_id}.pdb" \
+        awk -v chain="${chain}" '$1 == "HETATM" && substr($0, 22, 1) == chain {print substr($0, 1, 66)}' "/tmp/${pdb_id}.pdb" \
             >> "data/scaffolds_db/${output_name}.pdb" || true
 
         # Add TER and END records
