@@ -259,7 +259,7 @@ def hector_mapper_vctrsd(ply_fn, spprt_dstnc_x, spprt_dstnc_y, bin_sz, dot_skp_f
   fading radius: %f bins
   fading slope: %f
   """ % (ply_fn, dot_skp_frq, dot_map_frq, spprt_dstnc_x, spprt_dstnc_y, bin_sz, radius_fade, slope_fade)
-  np.savez_compressed("/results/" + ply_fn[:-4].split("/")[-1] + "_" + sign_flg, \
+  np.savez_compressed("results/" + ply_fn[:-4].split("/")[-1] + "_" + sign_flg, \
            coords=tris_cntrs[::dot_skp_frq,:], \
            nrmls=tris_unt_nrmls[::dot_skp_frq,:], \
            maps=g_spn_maps_fade_norm, \
