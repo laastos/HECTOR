@@ -7,7 +7,18 @@ RUN apt-get update \
         gcc \
         g++ \
         make \
+        wget \
+        unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Install EDTSurf for surface mesh generation
+RUN wget https://zhanggroup.org/EDTSurf/EDTSurf.zip \
+    && unzip EDTSurf.zip \
+    && cd EDTSurf \
+    && g++ -O3 -o EDTSurf EDTSurf.cpp \
+    && mv EDTSurf /usr/local/bin/ \
+    && cd .. \
+    && rm -rf EDTSurf EDTSurf.zip
 
 RUN pip install --no-cache-dir \
         cython==3.0.11 \
