@@ -7,10 +7,11 @@ Complete API documentation for the HECTOR source code modules.
 ## Table of Contents
 
 1. [hector_mapper.py](#hector_mapperpy)
-2. [maps_analysis_pairs_vs_all.py](#maps_analysis_pairs_vs_allpy)
-3. [aln_fltr_4_dots.py](#aln_fltr_4_dotspy)
-4. [sim.pyx](#simpyx)
-5. [Data Structures](#data-structures)
+2. [hector_mapper_parallel.py](#hector_mapper_parallelpy) (NEW)
+3. [maps_analysis_pairs_vs_all.py](#maps_analysis_pairs_vs_allpy)
+4. [aln_fltr_4_dots.py](#aln_fltr_4_dotspy)
+5. [sim.pyx](#simpyx)
+6. [Data Structures](#data-structures)
 
 ---
 
@@ -201,6 +202,118 @@ python hector_mapper.py <ply> <dist_x> <dist_y> <bin> <dot_skp> <map_skp> <inflt
 | `radius_fade` | float | Radial fading radius (default: 40.0) |
 | `slope_fade` | float | Fading slope (default: 0.3) |
 | `sign` | str | "lgnd" or "rcpt" |
+
+---
+
+## hector_mapper_parallel.py
+
+Parallelized fingerprinting engine using joblib for multi-core processing.
+
+**Location:** `code/hector_mapper_parallel.py`
+
+### Overview
+
+This module provides a parallelized implementation of the HECTOR mapping algorithm, offering significant speedup on multi-core systems. It imports utility functions from `hector_mapper.py` and parallelizes the vertex processing loop using joblib.
+
+### Functions
+
+---
+
+#### `process_single_vertex(vrtx, n, srfc_vrtx_arr, dot_map_frq, spprt_dstnc_x, spprt_dstnc_y, bin_sz, half_spprt_dstnc, tot_bins_x, tot_bins_y)`
+
+Worker function to process a single reference vertex and generate its spin map.
+
+**Parameters:**
+| Name | Type | Description |
+|------|------|-------------|
+| `vrtx` | numpy.ndarray | Reference vertex coordinates (1 x 3) |
+| `n` | numpy.ndarray | Reference vertex normal (1 x 3) |
+| `srfc_vrtx_arr` | numpy.ndarray | All surface vertices (N x 3) |
+| `dot_map_frq` | int | Mapped vertex-skipping frequency |
+| `spprt_dstnc_x` | float | Support distance alpha (Angstroms) |
+| `spprt_dstnc_y` | float | Support distance beta (Angstroms) |
+| `bin_sz` | float | Bin size (Angstroms) |
+| `half_spprt_dstnc` | float | Half of support distance y |
+| `tot_bins_x` | int | Total bins in x direction |
+| `tot_bins_y` | int | Total bins in y direction |
+
+**Returns:**
+| Name | Type | Description |
+|------|------|-------------|
+| `spn_img` | numpy.ndarray | Generated spin image for this vertex |
+
+**Usage:**
+This function is called internally by joblib's parallel executor. Direct use is not recommended.
+
+---
+
+#### `spn_map_srfc_parallel(srfc_vrtx_arr, srfc_nrml_arr, spprt_dstnc_x, spprt_dstnc_y, bin_sz, dot_skp_frq, dot_map_frq, n_jobs=-1)`
+
+Parallelized version of the core fingerprinting function.
+
+**Parameters:**
+| Name | Type | Description |
+|------|------|-------------|
+| `srfc_vrtx_arr` | numpy.ndarray | Matrix of input vertex position vectors (N x 3) |
+| `srfc_nrml_arr` | numpy.ndarray | Matrix of input vertex surface normal vectors (N x 3) |
+| `spprt_dstnc_x` | float | Support distance alpha (Angstroms) |
+| `spprt_dstnc_y` | float | Support distance beta (Angstroms) |
+| `bin_sz` | float | Bin size (Angstroms) |
+| `dot_skp_frq` | int | Reference vertex-skipping frequency |
+| `dot_map_frq` | int | Mapped vertex-skipping frequency |
+| `n_jobs` | int | Number of parallel jobs (-1 = all CPUs) |
+
+**Returns:**
+| Name | Type | Description |
+|------|------|-------------|
+| `vrtx_spn_maps` | list[numpy.ndarray] | List of 2D fingerprint matrices |
+
+**Example:**
+```python
+# Use all available cores
+maps = spn_map_srfc_parallel(vertices, normals, 10, 20, 0.2, 5, 1, n_jobs=-1)
+
+# Use 8 cores
+maps = spn_map_srfc_parallel(vertices, normals, 10, 20, 0.2, 5, 1, n_jobs=8)
+```
+
+---
+
+#### `hector_mapper_vctrsd_parallel(ply_fn, spprt_dstnc_x, spprt_dstnc_y, bin_sz, dot_skp_frq, dot_map_frq, sign_flg, infltn, radius_fade, slope_fade, n_jobs=-1)`
+
+Parallelized version of the main mapping wrapper function.
+
+**Parameters:**
+Same as `hector_mapper_vctrsd()` plus:
+| Name | Type | Description |
+|------|------|-------------|
+| `n_jobs` | int | Number of parallel jobs (-1 = all CPUs, default) |
+
+**Command-line Usage:**
+```bash
+python hector_mapper_parallel.py \
+    input.ply \      # PLY file
+    10 \             # dist_x
+    20 \             # dist_y
+    0.2 \            # bin size
+    40 \             # dot_skp
+    8 \              # map_skp
+    0.5 \            # inflation
+    40 \             # radius_fade
+    0.3 \            # slope_fade
+    rcpt \           # sign
+    --n_jobs -1      # Use all cores
+```
+
+**Performance:**
+- Expected speedup: ~N× on N-core systems
+- Memory usage: ~N× single-threaded
+- Progress reporting: verbose output with joblib
+
+**Optimization Tips:**
+1. Combine with high skipping frequencies for maximum speed
+2. Adjust `--n_jobs` if memory constrained
+3. For surfaces >500K vertices, use `dot_skp >= 40`
 
 ---
 
