@@ -73,16 +73,37 @@ def download_pdb(pdb_id, chain, output_dir):
     # Extract specific chain
     print(f"  Extracting chain {chain}...")
     chain_lines = []
+    header_lines = []
+
+    # First pass: collect header records
+    for line in pdb_content.split('\n'):
+        if line.startswith(('HEADER', 'TITLE', 'COMPND', 'SOURCE', 'KEYWDS',
+                           'EXPDTA', 'AUTHOR', 'REVDAT', 'JRNL', 'REMARK',
+                           'DBREF', 'SEQRES', 'CRYST1', 'ORIGX', 'SCALE', 'MTRIX')):
+            header_lines.append(line)
+
+    # Second pass: collect ATOM/HETATM records for specified chain
     for line in pdb_content.split('\n'):
         if line.startswith('ATOM') or line.startswith('HETATM'):
-            # Check if line has chain identifier at correct position (column 21)
+            # Chain ID is at column 21 (0-indexed) in standard PDB format
             if len(line) > 21 and line[21] == chain:
                 chain_lines.append(line)
 
-    chain_lines.append('END')
-
+    # Write PDB file with proper structure
     with open(output_path, 'w') as f:
-        f.write('\n'.join(chain_lines))
+        # Write headers
+        if header_lines:
+            f.write('\n'.join(header_lines))
+            f.write('\n')
+
+        # Write atoms
+        if chain_lines:
+            f.write('\n'.join(chain_lines))
+            f.write('\n')
+
+        # Write END record
+        f.write('TER\n')
+        f.write('END\n')
 
     return output_path
 

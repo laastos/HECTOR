@@ -66,10 +66,21 @@ for scaffold in "${SCAFFOLDS[@]}"; do
             continue
         fi
 
-        # Extract specific chain
+        # Extract specific chain with proper PDB format
         echo "  Extracting chain ${chain}..."
-        grep "^ATOM.*\ ${chain}\ " "/tmp/${pdb_id}.pdb" > "data/scaffolds_db/${output_name}.pdb" || true
-        grep "^HETATM.*\ ${chain}\ " "/tmp/${pdb_id}.pdb" >> "data/scaffolds_db/${output_name}.pdb" || true
+
+        # Extract header records
+        grep -E "^(HEADER|TITLE|COMPND|SOURCE|KEYWDS|EXPDTA|AUTHOR|REVDAT|JRNL|REMARK|DBREF|SEQRES|CRYST1|ORIGX|SCALE|MTRIX)" \
+            "/tmp/${pdb_id}.pdb" > "data/scaffolds_db/${output_name}.pdb" 2>/dev/null || true
+
+        # Extract ATOM/HETATM records for specified chain (chain ID at column 22, position 21 in 0-index)
+        awk -v chain="${chain}" '$1 == "ATOM" && substr($0, 22, 1) == chain' "/tmp/${pdb_id}.pdb" \
+            >> "data/scaffolds_db/${output_name}.pdb" || true
+        awk -v chain="${chain}" '$1 == "HETATM" && substr($0, 22, 1) == chain' "/tmp/${pdb_id}.pdb" \
+            >> "data/scaffolds_db/${output_name}.pdb" || true
+
+        # Add TER and END records
+        echo "TER" >> "data/scaffolds_db/${output_name}.pdb"
         echo "END" >> "data/scaffolds_db/${output_name}.pdb"
 
         rm "/tmp/${pdb_id}.pdb"
