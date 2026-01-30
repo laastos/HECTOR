@@ -93,9 +93,16 @@ for scaffold in "${SCAFFOLDS[@]}"; do
     if [ ! -f "output/scaffolds/${output_name}.ply" ]; then
         echo "  Generating surface mesh..."
         # EDTSurf automatically adds .ply extension, so don't include it in the output path
+        # Note: EDTSurf returns exit code 1 even on success, so we use || true and verify the file
         EDTSurf -i "data/scaffolds_db/${output_name}.pdb" \
                 -o "output/scaffolds/${output_name}" \
-                -s 3 > /dev/null 2>&1
+                -s 3 > /dev/null 2>&1 || true
+
+        # Verify the output file was actually created
+        if [ ! -f "output/scaffolds/${output_name}.ply" ]; then
+            echo -e "  ${RED}Failed to generate surface: output file not created${NC}"
+            continue
+        fi
     else
         echo "  Surface mesh already exists, skipping"
     fi

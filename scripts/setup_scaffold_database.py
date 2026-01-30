@@ -122,15 +122,17 @@ def generate_surface(pdb_path, output_dir):
         return ply_path
 
     print("  Generating surface mesh...")
-    try:
-        subprocess.run([
-            'EDTSurf',
-            '-i', str(pdb_path),
-            '-o', str(ply_base),  # Don't include .ply - EDTSurf adds it automatically
-            '-s', '3'
-        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-    except subprocess.CalledProcessError as e:
-        print_color(f"  Failed to generate surface: {e}", RED)
+    # Note: EDTSurf returns exit code 1 even on success, so we can't use check=True
+    subprocess.run([
+        'EDTSurf',
+        '-i', str(pdb_path),
+        '-o', str(ply_base),  # Don't include .ply - EDTSurf adds it automatically
+        '-s', '3'
+    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    # Verify the output file was actually created
+    if not ply_path.exists():
+        print_color(f"  Failed to generate surface: output file not created", RED)
         return None
 
     return ply_path
