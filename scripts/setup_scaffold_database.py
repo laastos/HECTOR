@@ -12,8 +12,8 @@ from pathlib import Path
 
 # Example scaffolds to download
 SCAFFOLDS = [
-    ("1CGI", "A"),
-    ("1CGI", "B"),
+    ("1CGI", "E"),  # 1CGI has chains E and I, not A and B
+    ("1CGI", "I"),
     ("1ky2", "A"),
     ("1uzi", "A"),
     ("5djl", "A"),
