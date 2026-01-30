@@ -26,6 +26,32 @@ RUN pip install --no-cache-dir \
         numpy==1.26.0 \
         scipy==1.12.0
 
+# Install python development headers for Cython compilation
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        python3.9-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and compile Cython modules
+COPY code/sim.pyx /tmp/build/
+WORKDIR /tmp/build
+RUN cython sim.pyx && \
+    gcc -shared -pthread -fPIC -fwrapv -O2 -Wall \
+        -fno-strict-aliasing \
+        -I/usr/local/include/python3.9 \
+        -o sim.cpython-39-x86_64-linux-gnu.so \
+        sim.c \
+        -lpython3.9
+
+# Create entrypoint script to copy compiled modules to workspace
+RUN echo '#!/bin/bash\n\
+if [ ! -f /workspace/code/sim.cpython-39-x86_64-linux-gnu.so ]; then\n\
+    echo "Installing pre-compiled Cython modules..."\n\
+    cp /tmp/build/*.so /workspace/code/ 2>/dev/null || true\n\
+fi\n\
+exec "$@"' > /entrypoint.sh && chmod +x /entrypoint.sh
+
 WORKDIR /workspace
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/bin/bash"]
