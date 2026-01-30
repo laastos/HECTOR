@@ -39,6 +39,7 @@ RUN cython sim.pyx && \
     gcc -shared -pthread -fPIC -fwrapv -O2 -Wall \
         -fno-strict-aliasing \
         -I/usr/local/include/python3.9 \
+        -I$(python3 -c "import numpy; print(numpy.get_include())") \
         -o sim.cpython-39-x86_64-linux-gnu.so \
         sim.c \
         -lpython3.9
