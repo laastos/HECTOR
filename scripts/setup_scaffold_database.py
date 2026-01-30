@@ -113,6 +113,8 @@ def download_pdb(pdb_id, chain, output_dir):
 
 def generate_surface(pdb_path, output_dir):
     """Generate surface mesh using EDTSurf"""
+    # EDTSurf automatically adds .ply extension, so don't include it in the path
+    ply_base = output_dir / pdb_path.stem
     ply_path = output_dir / f"{pdb_path.stem}.ply"
 
     if ply_path.exists():
@@ -124,7 +126,7 @@ def generate_surface(pdb_path, output_dir):
         subprocess.run([
             'EDTSurf',
             '-i', str(pdb_path),
-            '-o', str(ply_path),
+            '-o', str(ply_base),  # Don't include .ply - EDTSurf adds it automatically
             '-s', '3'
         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
     except subprocess.CalledProcessError as e:
