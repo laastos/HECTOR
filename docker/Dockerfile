@@ -29,7 +29,7 @@ RUN pip install --no-cache-dir \
 # Install python development headers for Cython compilation
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        python3.9-dev \
+        python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy and compile Cython modules
